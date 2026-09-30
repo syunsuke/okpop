@@ -1,0 +1,17 @@
+[project]
+name = "okpop"
+version = "0.1.0"
+description = "Tools for collecting, processing, storing, and analyzing population data for Osaka Prefecture."
+readme = "README.md"
+authors = [
+    { name = "shunsk", email = "ok.xmonad@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = []
+
+[project.scripts]
+okpop = "okpop:main"
+
+[build-system]
+requires = ["uv_build>=0.12.14,<0.13.0"]
+build-backend = "uv_build"
