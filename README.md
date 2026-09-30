@@ -1,15 +1,12 @@
 <div align="center">
 
-# 🐙 OKPOP
+<img src="assets/okpop-banner.png"
+     alt="OKPOP — OKPOP Knows Population of Osaka Prefecture"
+     width="100%">
 
-### OKPOP Knows Population of Osaka Prefecture
+<br>
 
 **Collect. Process. Store. Analyze.**
-
-大阪府の人口データを収集・整形・蓄積・分析するための  
-Python-based population data toolkit.
-
----
 
 `Python` · `pandas` · `SQLite` · `Streamlit` · `Quarto` · `uv`
 
