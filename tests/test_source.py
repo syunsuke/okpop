@@ -52,6 +52,7 @@ def test_source_is_frozen():
 
 def test_source_keys():
     assert set(SOURCES) == {
+        "census_2020",
         "suikei_current",
         "suikei_archive",
         "kubun_current",
@@ -59,6 +60,20 @@ def test_source_keys():
         "hosei",
     }
 
+def test_census_2020():
+    source = SOURCES["census_2020"]
+
+    assert source.datatype == "census"
+    assert source.url == (
+        "https://www.pref.osaka.lg.jp/"
+        "o040090/toukei/top_portal/kokucho.html"
+    )
+    assert source.patterns == [
+        r"r2kokutyo_osakahu_kakuhou_syousai\.xlsx",
+    ]
+    assert source.directory == "census"
+    assert source.start_date == "2020-10-01"
+    assert source.end_date == "2020-10-01"
 
 def test_suikei_current():
     source = SOURCES["suikei_current"]

@@ -81,4 +81,19 @@ SOURCES = {
         start_date="2010-11-01",
         end_date="2020-09-01",
     ),
+
+    "census_2020": Source(
+    datatype="census",
+    url=(
+        "https://www.pref.osaka.lg.jp/"
+        "o040090/toukei/top_portal/kokucho.html"
+    ),
+    patterns=[
+        r"r2kokutyo_osakahu_kakuhou_syousai\.xlsx"
+    ],
+    directory="census",
+    start_date="2020-10-01",
+    end_date="2020-10-01",
+),
+
 }

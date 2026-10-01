@@ -10,6 +10,12 @@ def guess_datatype(file: str | Path) -> str | None:
 
     filename = Path(urlparse(str(file)).path).name
 
+    if re.fullmatch(
+        r"r2kokutyo_osakahu_kakuhou_syousai\.xlsx",
+        filename,
+    ):
+        return "census"
+
     if re.fullmatch(r".*5sai\.xlsx", filename):
         return "kubun"
 
@@ -33,6 +39,12 @@ def dates_from_filename(
     filepath = Path(urlparse(str(file)).path)
 
     match guess_datatype(filepath):
+
+        case "census":
+            # 増えたら考える
+            return pd.DatetimeIndex([
+            pd.Timestamp("2020-10-01")
+        ])
 
         case "suikei":
             res = re.search(
