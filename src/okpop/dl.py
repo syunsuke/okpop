@@ -64,7 +64,6 @@ def file_from_url(
 
     return output
 
-
 def files_from_page(
     url: str,
     patterns: list[str],
@@ -72,20 +71,26 @@ def files_from_page(
     interval: float = 0.3,
 ) -> list[Path]:
     """Webページから対象ファイルをまとめてダウンロードする。"""
-
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
 
     urls = urls_from_page(url, patterns)
 
+    total = len(urls)
+
+    print(f"{total} files found")
+
     downloaded = []
 
-    for file_url in urls:
+    for i, file_url in enumerate(urls, start=1):
         filename = Path(urlparse(file_url).path).name
         output = directory / filename
 
         if output.exists():
+            print(f"[{i}/{total}] skip: {filename}")
             continue
+
+        print(f"[{i}/{total}] download: {filename}")
 
         path = file_from_url(
             file_url,
@@ -94,6 +99,12 @@ def files_from_page(
 
         downloaded.append(path)
 
+        print(f"[{i}/{total}] done: {filename}")
+
         time.sleep(interval)
 
     return downloaded
+
+
+
+
