@@ -26,3 +26,6 @@ data/raw/
 data/db/
 data/output/
 
+# Sandbox data
+sandbox/data/*
+!sandbox/data/.gitkeep
