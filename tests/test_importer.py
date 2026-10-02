@@ -43,7 +43,10 @@ def test_import_file_suikei(tmp_path):
     assert row[0] == 8_804_619
     assert row[1] == 4_215_019
     assert row[2] == 4_589_600
-    assert row[3] == "2021-11-01 00:00:00"
+
+    # DBでは日付を YYYY-MM-DD 形式で保存する
+    assert row[3] == "2021-11-01"
+
 
 def test_read_census():
     file = (
@@ -53,7 +56,6 @@ def test_read_census():
     )
 
     result = importer.read_file(file)
-
 
     assert isinstance(result, importer.ImportData)
     assert isinstance(result.dataframe, pd.DataFrame)
@@ -134,7 +136,7 @@ def test_is_imported(tmp_path):
     # Excelを読む
     data = importer.read_file(file)
 
-    # まだDBには入れていない
+    # まだDBには入っていない
     assert importer.is_imported(
         data,
         db_path,
@@ -175,7 +177,10 @@ def test_import_directory(tmp_path):
     ]
 
     for file in files:
-        shutil.copy(file, input_dir / file.name)
+        shutil.copy(
+            file,
+            input_dir / file.name,
+        )
 
     # 1回目
     importer.import_directory(

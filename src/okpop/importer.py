@@ -85,13 +85,15 @@ def is_imported(
 
     with sqlite3.connect(db_path) as con:
         for date in dates:
+            date_str = pd.Timestamp(date).strftime("%Y-%m-%d")
+
             row = con.execute(
                 f"""
                 SELECT COUNT(*)
                 FROM {data.table}
                 WHERE observation_date = ?
                 """,
-                (str(date),),
+                (date_str,),
             ).fetchone()
 
             if row is None:
@@ -104,7 +106,6 @@ def is_imported(
 
     return True
 
-
 def import_data(
     data: ImportData,
     db_path: str | Path = database.DEFAULT_DB_PATH,
@@ -113,8 +114,13 @@ def import_data(
 
     db_path = Path(db_path)
 
+    df = data.dataframe.copy()
+    df["observation_date"] = (
+        pd.to_datetime(df["observation_date"])
+        .dt.strftime("%Y-%m-%d")
+    )
     database.write_df_to_db(
-        df=data.dataframe,
+        df=df,
         table_name=data.table,
         dbname=db_path,
     )
