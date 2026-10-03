@@ -117,3 +117,23 @@ def test_write_duplicate_row(tmp_path):
             database.TBL_CENSUS,
             dbname=db_path,
         )
+
+
+def test_create_views(tmp_path):
+    db_path = tmp_path / "test.sqlite"
+
+    database.init_database(dbname=db_path)
+    database.create_views(dbname=db_path)
+
+    with sqlite3.connect(db_path) as con:
+        row = con.execute(
+            """
+            SELECT name
+            FROM sqlite_master
+            WHERE type = 'view'
+              AND name = 'view_excel_report_data'
+            """
+        ).fetchone()
+
+    assert row is not None
+    assert row[0] == "view_excel_report_data"

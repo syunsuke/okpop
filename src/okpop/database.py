@@ -5,6 +5,7 @@ import pandas as pd
 
 DEFAULT_DB_PATH = Path("data/db/population_osaka.sqlite")
 DEFAULT_SCHEMA_PATH = Path("sql/schema.sql")
+DEFAULT_VIEWS_PATH = Path("sql/views.sql")
 
 TBL_CENSUS = "census"
 TBL_SUIKEI = "suikei"
@@ -31,6 +32,27 @@ def init_database(
 
     # データベース処理
     sql = schema_file.read_text(encoding="utf-8")
+    con = sqlite3.connect(dbname)
+
+    try:
+        con.executescript(sql)
+    except Exception:
+        con.rollback()
+        raise
+    finally:
+        con.close()
+
+def create_views(
+    dbname: str | Path = DEFAULT_DB_PATH,
+    views_file: str | Path = DEFAULT_VIEWS_PATH,
+) -> None:
+    """SQLiteデータベースのVIEWを作成・更新する。"""
+
+    dbname = Path(dbname)
+    views_file = Path(views_file)
+
+    sql = views_file.read_text(encoding="utf-8")
+
     con = sqlite3.connect(dbname)
 
     try:
