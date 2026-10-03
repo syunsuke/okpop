@@ -230,9 +230,9 @@ def validate_report_data(
 
 def create_report(
     area_name: str,
-    end_date: str,
     output_path: str | Path,
     template_path: str | Path,
+    end_date: str | None = None,
     db_path: str | Path = database.DEFAULT_DB_PATH,
 ) -> None:
     """指定した地域・基準日までのExcelレポートを作成する。"""
@@ -252,9 +252,9 @@ def create_report(
     )
 
 def create_report_archive(
-    end_date: str,
     output_dir: str | Path,
     template_path: str | Path,
+    end_date: str | None = None,
     db_path: str | Path = database.DEFAULT_DB_PATH,
 ) -> Path:
     """全地域のExcelレポートを作成し、ZIPアーカイブにする。"""
