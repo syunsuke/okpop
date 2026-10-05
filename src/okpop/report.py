@@ -276,12 +276,23 @@ def create_report_archive(
         exist_ok=True,
     )
 
-    for area_name in area.AREA_NAME_V002_COL_NAME:
+    area_names = area.AREA_NAME_V002_COL_NAME
+    total = len(area_names)
+    
+    for i, area_name in enumerate(
+        area_names,
+        start=1,
+    ):
+        print(
+            f"[{i}/{total}] "
+            f"{area_name} のレポートを作成中..."
+        )
+    
         output_path = (
             report_dir
             / f"{area_name}_{created_datetime}.xlsx"
         )
-
+    
         create_report(
             area_name=area_name,
             end_date=end_date,
