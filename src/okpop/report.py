@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from shutil import copyfile, make_archive, rmtree
 
@@ -9,17 +9,15 @@ from openpyxl import load_workbook
 from . import area, database
 
 
-def read_report_data(
+def get_latest_report_date(
     area_name: str,
-    start_date: str | None = None,
     end_date: str | None = None,
     db_path: str | Path = database.DEFAULT_DB_PATH,
-) -> pd.DataFrame:
+) -> pd.Timestamp:
+    """人口と年齢区分がそろっている最新月を取得する。"""
 
     with sqlite3.connect(db_path) as con:
-
-        # 人口＋年齢区分がそろっている最新月を取得
-        latest_query = """
+        query = """
             SELECT MAX(observation_date)
             FROM view_excel_report_data
             WHERE area_name = ?
@@ -27,27 +25,60 @@ def read_report_data(
               AND total_age_00_04 IS NOT NULL
         """
 
-        latest_params = [area_name]
+        params = [area_name]
 
         if end_date is not None:
-            latest_query += """
+            query += """
                 AND observation_date <= ?
             """
-            latest_params.append(end_date)
+            params.append(end_date)
 
         row = con.execute(
-            latest_query,
-            latest_params,
+            query,
+            params,
         ).fetchone()
 
-        latest_date = row[0]
+    latest_date = row[0]
+    
+    if not isinstance(latest_date, str):
+        raise ValueError(
+            f"{area_name} の最新日を取得できません"
+        )
 
-        if latest_date is None:
-            raise ValueError(
-                f"{area_name} の年齢区分データがありません"
-            )
+    return pd.to_datetime(latest_date)
 
-        # 基準月までのデータを取得
+
+def get_latest_archive_date(
+    db_path: str | Path = database.DEFAULT_DB_PATH,
+) -> pd.Timestamp:
+    """全地域でレポート作成可能な共通の最新月を取得する。"""
+
+    latest_dates = [
+        get_latest_report_date(
+            area_name=area_name,
+            db_path=db_path,
+        )
+        for area_name in area.AREA_NAME_V002_COL_NAME
+    ]
+
+    return min(latest_dates)
+
+
+
+def read_report_data(
+    area_name: str,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    db_path: str | Path = database.DEFAULT_DB_PATH,
+) -> pd.DataFrame:
+
+    latest_date = get_latest_report_date(
+        area_name=area_name,
+        end_date=end_date,
+        db_path=db_path,
+    )
+
+    with sqlite3.connect(db_path) as con:
         query = """
             SELECT *
             FROM view_excel_report_data
@@ -57,7 +88,7 @@ def read_report_data(
 
         params = [
             area_name,
-            latest_date,
+            latest_date.strftime("%Y-%m-%d"),
         ]
 
         if start_date is not None:
@@ -251,6 +282,7 @@ def create_report(
         output_path=output_path,
     )
 
+
 def create_report_archive(
     output_dir: str | Path,
     template_path: str | Path,
@@ -263,12 +295,30 @@ def create_report_archive(
     template_path = Path(template_path)
     db_path = Path(db_path)
 
-    created_datetime = datetime.now().strftime(
-        "%Y%m%d_%H%M%S"
+    latest_date = get_latest_archive_date(
+        db_path=db_path,
     )
 
-    report_dir = output_dir / (
-        f"okpop_report_{created_datetime}"
+    if end_date is not None:
+        requested_date = pd.to_datetime(end_date)
+
+        if requested_date < latest_date:
+            latest_date = requested_date
+
+    report_date = latest_date.strftime("%Y%m")
+
+    archive_file = (
+        output_dir
+        / f"okpop_report_{report_date}.zip"
+    )
+
+    # すでに最新版があれば再作成しない
+    if archive_file.exists():
+        return archive_file
+
+    report_dir = (
+        output_dir
+        / f"okpop_report_{report_date}"
     )
 
     report_dir.mkdir(
@@ -278,7 +328,7 @@ def create_report_archive(
 
     area_names = area.AREA_NAME_V002_COL_NAME
     total = len(area_names)
-    
+
     for i, area_name in enumerate(
         area_names,
         start=1,
@@ -287,22 +337,25 @@ def create_report_archive(
             f"[{i}/{total}] "
             f"{area_name} のレポートを作成中..."
         )
-    
+
         output_path = (
             report_dir
-            / f"{area_name}_{created_datetime}.xlsx"
+            / f"{area_name}_{report_date}.xlsx"
         )
-    
+
         create_report(
             area_name=area_name,
-            end_date=end_date,
+            end_date=latest_date.strftime(
+                "%Y-%m-%d"
+            ),
             output_path=output_path,
             template_path=template_path,
             db_path=db_path,
         )
 
-    archive_base = output_dir / (
-        f"okpop_report_{created_datetime}"
+    archive_base = (
+        output_dir
+        / f"okpop_report_{report_date}"
     )
 
     archive_file = Path(
@@ -316,5 +369,3 @@ def create_report_archive(
     rmtree(report_dir)
 
     return archive_file
-
-

@@ -234,6 +234,14 @@ def test_create_report_archive(
             area_name,
             encoding="utf-8",
         )
+    
+    monkeypatch.setattr(
+        report,
+        "get_latest_archive_date",
+        lambda db_path: pd.Timestamp(
+            "2025-09-01"
+        ),
+    )
 
     monkeypatch.setattr(
         report,
@@ -276,4 +284,48 @@ def test_create_report_archive(
     assert any(
         filename.startswith("大阪市福島区_")
         for filename in filenames
+    )
+
+
+def test_create_report_archive_reuses_existing_zip(
+    monkeypatch,
+    tmp_path,
+):
+    archive_file = (
+        tmp_path / "okpop_report_202509.zip"
+    )
+
+    archive_file.write_bytes(
+        b"existing zip"
+    )
+
+    monkeypatch.setattr(
+        report,
+        "get_latest_archive_date",
+        lambda db_path: pd.Timestamp(
+            "2025-09-01"
+        ),
+    )
+
+    def fail_create_report(*args, **kwargs):
+        raise AssertionError(
+            "create_report should not be called"
+        )
+
+    monkeypatch.setattr(
+        report,
+        "create_report",
+        fail_create_report,
+    )
+
+    result = report.create_report_archive(
+        output_dir=tmp_path,
+        template_path=tmp_path / "template.xlsx",
+        db_path=tmp_path / "test.sqlite",
+    )
+
+    assert result == archive_file
+
+    assert archive_file.read_bytes() == (
+        b"existing zip"
     )
