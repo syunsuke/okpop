@@ -53,15 +53,41 @@ def get_latest_archive_date(
 ) -> pd.Timestamp:
     """全地域でレポート作成可能な共通の最新月を取得する。"""
 
-    latest_dates = [
-        get_latest_report_date(
-            area_name=area_name,
-            db_path=db_path,
-        )
-        for area_name in area.AREA_NAME_V002_COL_NAME
-    ]
+    area_names = area.AREA_NAME_V002_COL_NAME
 
-    return min(latest_dates)
+    query = """
+        SELECT
+            area_name,
+            MAX(observation_date) AS latest_date
+        FROM view_excel_report_data
+        WHERE total_population IS NOT NULL
+          AND total_age_00_04 IS NOT NULL
+        GROUP BY area_name
+    """
+
+    with sqlite3.connect(db_path) as con:
+        rows = con.execute(query).fetchall()
+
+    latest_by_area = {
+        area_name: latest_date
+        for area_name, latest_date in rows
+    }
+
+    # 必要な地域がすべて含まれているか確認
+    missing_areas = set(area_names) - set(latest_by_area)
+
+    if missing_areas:
+        raise ValueError(
+            f"最新日を取得できない地域があります: {missing_areas}"
+        )
+
+    # 全地域の最新日のうち、最も古い日付を採用
+    latest_date = min(
+        latest_by_area[name]
+        for name in area_names
+    )
+
+    return pd.to_datetime(latest_date)
 
 
 
