@@ -46,7 +46,7 @@ OKPOP currently handles:
 - 最新年月・指定年月のレポート作成
 - 作成済みレポートZIPの再利用
 - GmailによるレポートZIPの送信
-- NiceGUIによるデータベース更新・レポート操作
+- NiceGUIによる人口推移ダッシュボード・データベース更新・レポート操作
 - pytestによるデータ処理・DB・レポート処理のテスト
 
 
@@ -84,31 +84,53 @@ OKPOP currently handles:
 ```
 
 
-## 🖥 GUI
+## 🖥 Dashboard & GUI
 
-OKPOP includes a web-based user interface built with **NiceGUI**.
+OKPOP includes a browser-based dashboard built with **NiceGUI** for exploring
+Osaka Prefecture population statistics and managing the local SQLite database.
 
-The GUI can:
+### 📈 Population Dashboard
 
-- show the latest date stored for each population dataset
-- update the population database
-- retrieve the latest available report
-- create reports for a specified year and month
-- download generated ZIP archives
+Explore historical population trends using interactive graphs.
 
-Start the GUI with:
+- Select a region and reference month.
+- Compare data for the same month across multiple years (5 or 10 years, where available).
+- Visualize total population, male population, female population, and households.
+
+<div align="center">
+
+<img src="assets/dashboard_population.png"
+     alt="OKPOP population dashboard with historical population charts"
+     width="90%">
+
+</div>
+
+### 🗃 Database Management & Reports
+
+Manage the datasets and generate reports directly from the GUI.
+
+- Check the earliest and latest observation dates stored for each dataset.
+- Update the population database.
+- Retrieve the latest available report or generate one for a specified year and month.
+- Download generated ZIP archives.
+
+<div align="center">
+
+<img src="assets/dashboard_database.png"
+     alt="OKPOP database management and report controls"
+     width="90%">
+
+</div>
+
+### Launch the GUI
+
+From the project root, run:
 
 ```bash
 uv run python -m okpop.app.main
 ```
 
-<div align="center">
-
-<img src="assets/okpop-gui.png"
-     alt="OKPOP NiceGUI application"
-     width="80%">
-
-</div>
+Open the local URL displayed in the terminal in your browser.
 
 
 ## 🗂 Project Structure
@@ -117,7 +139,8 @@ uv run python -m okpop.app.main
 okpop/
 ├── assets/
 │   ├── okpop-banner.png
-│   ├── okpop-gui.png
+│   ├── dashboard-population.png
+│   ├── dashboard-database.png
 │   └── templates/
 │       └── populaiton_report_template_0001.xlsx
 │
