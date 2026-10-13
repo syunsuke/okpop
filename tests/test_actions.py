@@ -3,13 +3,12 @@ import sqlite3
 from okpop.app import actions
 
 
-def test_create_reports(
+
+def test_create_report_archive_for_date(
     monkeypatch,
     tmp_path,
 ):
-    expected_archive = (
-        tmp_path / "okpop_report.zip"
-    )
+    expected_archive = tmp_path / "okpop_report.zip"
 
     called = {}
 
@@ -32,23 +31,18 @@ def test_create_reports(
         fake_create_report_archive,
     )
 
-    result = actions.create_reports()
+    result = actions.create_report_archive_for_date(
+        2026,
+        8,
+    )
 
     assert result == expected_archive
 
-    assert called["output_dir"] == (
-        actions.OUTPUT_DIR
-    )
+    assert called["output_dir"] == actions.OUTPUT_DIR
+    assert called["template_path"] == actions.TEMPLATE_PATH
+    assert called["db_path"] == actions.DB_PATH
+    assert called["end_date"] == "2026-08-01"
 
-    assert called["template_path"] == (
-        actions.TEMPLATE_PATH
-    )
-
-    assert called["db_path"] == (
-        actions.DB_PATH
-    )
-
-    assert called["end_date"] is None
 
 def test_get_database_status(
     monkeypatch,
@@ -61,6 +55,7 @@ def test_get_database_status(
             "census",
             "suikei",
             "hosei",
+            "population_age5_v002",
         ]:
             con.execute(
                 f"""
@@ -112,7 +107,10 @@ def test_get_database_status(
         "census": "2025-10-01",
         "suikei": "2026-09-01",
         "hosei": "2025-09-01",
+        "population_age5_v002": None,
     }
+
+
 
 def test_update_database(
     monkeypatch,
