@@ -50,6 +50,101 @@ OKPOP currently handles:
 - pytestによるデータ処理・DB・レポート処理のテスト
 
 
+## 🚀 Quick Start — Windows
+
+OKPOPは、Windows上で動作するGUI付きの人口統計データ管理ツールです。
+
+**PythonやGitを事前にインストールする必要はありません。**
+
+初回のみ、以下の手順でセットアップしてください。
+
+### Step 1 — Download OKPOP
+
+
+[OKPOPのGitHubページ](https://github.com/syunsuke/okpop)を開き、緑色の **Code** ボタンをクリックします。
+
+<div align="center">
+  <img src="assets/github-download-step1.png"
+       alt="GitHubのCodeボタンを手書きの赤丸で示した画像"
+       width="680">
+  <p><sub>▲ 赤丸で囲んだ「Code」をクリック</sub></p>
+</div>
+
+表示されたメニューから **Download ZIP** を選択し、ダウンロードしたZIPファイルを展開してください。
+
+
+展開した `okpop-main` フォルダがOKPOPの作業フォルダになります。
+
+### Step 2 — Install uv
+
+OKPOPは、Pythonの実行環境を管理する **uv** を使用します。
+
+Windowsのスタートメニューから「ターミナル」または「PowerShell」を起動し、次のコマンドを実行してください。
+
+```powershell
+winget install --id=astral-sh.uv -e
+```
+
+インストール後、ターミナルを一度閉じて開き直します。
+
+```powershell
+uv --version
+```
+
+バージョン番号が表示されればインストール成功です。
+
+> **What is uv?**
+>
+> uvはPythonの環境構築とパッケージ管理を自動化するツールです。OKPOPでは、Python本体や必要なライブラリの準備に使用します。
+
+### Step 3 — Setup OKPOP
+
+エクスプローラーで展開した `okpop-main` フォルダを開きます。
+
+アドレスバーに `powershell` と入力し、Enterキーを押してください。
+
+開いたPowerShellで、次のコマンドを実行します。
+
+```powershell
+uv run okpop setup
+```
+
+初回セットアップでは、次の処理が自動的に行われます。
+
+- Python実行環境の準備
+- 必要なライブラリのインストール
+- 大阪府の人口統計Excelデータのダウンロード
+- SQLiteデータベースの構築
+
+`Setup completed.` と表示されれば完了です。
+
+> **Note**
+>
+> 初回はデータのダウンロードとデータベース構築に時間がかかる場合があります。インターネット接続が必要です。
+
+### Step 4 — Launch OKPOP
+
+同じPowerShellで、次のコマンドを実行します。
+
+```powershell
+uv run python -m okpop.app.main
+```
+
+表示されたローカルURLをブラウザで開くと、OKPOPのGUIを利用できます。
+
+### Next Time
+
+2回目以降は、`okpop-main` フォルダでPowerShellを開き、GUI起動コマンドを実行するだけです。
+
+```powershell
+uv run python -m okpop.app.main
+```
+
+---
+
+**Ready to explore Osaka's population data? 🐙**
+
+
 ## ⚡ Workflow
 
 ```text
