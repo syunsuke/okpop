@@ -3,7 +3,9 @@ from pathlib import Path
 
 import pandas as pd
 
-DEFAULT_DB_PATH = Path("data/db/population_osaka.sqlite")
+from okpop.paths import DB_PATH
+
+DEFAULT_DB_PATH = DB_PATH
 DEFAULT_SCHEMA_PATH = Path("sql/schema.sql")
 DEFAULT_VIEWS_PATH = Path("sql/views.sql")
 

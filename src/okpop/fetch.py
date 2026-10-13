@@ -3,9 +3,10 @@ from pathlib import Path
 import pandas as pd
 
 from okpop import dl, filecheck
+from okpop.paths import RAW_DIR
 from okpop.source import SOURCES
 
-DEFAULT_RAW_DIR = Path("data/raw")
+DEFAULT_RAW_DIR = RAW_DIR
 
 
 def fetch(
