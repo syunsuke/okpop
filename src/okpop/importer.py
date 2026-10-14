@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -83,7 +84,7 @@ def is_imported(
         .drop_duplicates()
     )
 
-    with sqlite3.connect(db_path) as con:
+    with closing(sqlite3.connect(db_path)) as con:
         for date in dates:
             date_str = pd.Timestamp(date).strftime("%Y-%m-%d")
 
