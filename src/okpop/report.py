@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import closing
 from datetime import date
 from pathlib import Path
 from shutil import copyfile, make_archive, rmtree
@@ -16,7 +17,7 @@ def get_latest_report_date(
 ) -> pd.Timestamp:
     """人口と年齢区分がそろっている最新月を取得する。"""
 
-    with sqlite3.connect(db_path) as con:
+    with closing(sqlite3.connect(db_path)) as con:
         query = """
             SELECT MAX(observation_date)
             FROM view_excel_report_data
@@ -65,7 +66,7 @@ def get_latest_archive_date(
         GROUP BY area_name
     """
 
-    with sqlite3.connect(db_path) as con:
+    with closing(sqlite3.connect(db_path)) as con:
         rows = con.execute(query).fetchall()
 
     latest_by_area = {
@@ -104,7 +105,7 @@ def read_report_data(
         db_path=db_path,
     )
 
-    with sqlite3.connect(db_path) as con:
+    with closing(sqlite3.connect(db_path)) as con:
         query = """
             SELECT *
             FROM view_excel_report_data

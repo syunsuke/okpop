@@ -1,5 +1,6 @@
 from pathlib import Path
 import sqlite3
+from contextlib import closing
 
 from nicegui import run, ui
 
@@ -16,7 +17,7 @@ TABLES = {
 
 def get_date_ranges() -> dict[str, tuple[str | None, str | None]]:
     """各テーブルの最古・最新の観測日を取得する。"""
-    with sqlite3.connect(database.DEFAULT_DB_PATH) as con:
+    with closing(sqlite3.connect(database.DEFAULT_DB_PATH)) as con:
         return {
             table: con.execute(
                 f"SELECT MIN(observation_date), MAX(observation_date) FROM {table}"
@@ -31,7 +32,7 @@ def format_date_range(value: tuple[str | None, str | None]) -> str:
 
 
 def get_population_areas() -> list[str]:
-    with sqlite3.connect(database.DEFAULT_DB_PATH) as con:
+    with closing(sqlite3.connect(database.DEFAULT_DB_PATH)) as con:
         return [
             name for (name,) in con.execute(
                 "SELECT DISTINCT area_name FROM suikei ORDER BY area_name"
@@ -41,7 +42,7 @@ def get_population_areas() -> list[str]:
 
 def get_population_overview(area_name: str) -> dict:
     """最新の人口と、直前の観測値との差を取得する。"""
-    with sqlite3.connect(database.DEFAULT_DB_PATH) as con:
+    with closing(sqlite3.connect(database.DEFAULT_DB_PATH)) as con:
         rows = con.execute(
             """SELECT observation_date, total_population
                FROM suikei
@@ -60,7 +61,7 @@ def get_population_overview(area_name: str) -> dict:
 
 def get_yearly_series(area_name: str, month: int, years: int) -> dict:
     """最新収録年までの指定月の年次データを取得する。"""
-    with sqlite3.connect(database.DEFAULT_DB_PATH) as con:
+    with closing(sqlite3.connect(database.DEFAULT_DB_PATH)) as con:
         latest_year = con.execute(
             "SELECT MAX(CAST(substr(observation_date, 1, 4) AS INTEGER)) "
             "FROM suikei WHERE area_name = ?",

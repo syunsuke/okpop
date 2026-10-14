@@ -32,6 +32,24 @@ def test_init_database(tmp_path):
     assert database.TBL_AGE5_V001 in table_names
     assert database.TBL_AGE5_V002 in table_names
 
+
+def test_default_sql_paths_work_outside_project_root(tmp_path, monkeypatch):
+    db_path = tmp_path / "test.sqlite"
+    other_working_directory = tmp_path / "working-directory"
+    other_working_directory.mkdir()
+    monkeypatch.chdir(other_working_directory)
+
+    database.init_database(dbname=db_path)
+    database.create_views(dbname=db_path)
+
+    with sqlite3.connect(db_path) as con:
+        view = con.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'view' "
+            "AND name = 'view_excel_report_data'"
+        ).fetchone()
+
+    assert view == ("view_excel_report_data",)
+
 def test_init_database_reset(tmp_path):
     """reset=Trueなら既存DBを作り直す"""
 

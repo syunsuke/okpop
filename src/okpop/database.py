@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from okpop.paths import DB_PATH
+from okpop.paths import DB_PATH, PROJECT_ROOT
 
 DEFAULT_DB_PATH = DB_PATH
-DEFAULT_SCHEMA_PATH = Path("sql/schema.sql")
-DEFAULT_VIEWS_PATH = Path("sql/views.sql")
+DEFAULT_SCHEMA_PATH = PROJECT_ROOT / "sql" / "schema.sql"
+DEFAULT_VIEWS_PATH = PROJECT_ROOT / "sql" / "views.sql"
 
 TBL_CENSUS = "census"
 TBL_SUIKEI = "suikei"

@@ -1,16 +1,16 @@
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from okpop import database, fetch, importer, report
+from okpop.paths import OUTPUT_DIR, PROJECT_ROOT, RAW_DIR
 
-TEMPLATE_PATH = Path(
-    "assets/templates/"
-    "populaiton_report_template_0001.xlsx"
+TEMPLATE_PATH = (
+    PROJECT_ROOT
+    / "assets"
+    / "templates"
+    / "populaiton_report_template_0001.xlsx"
 )
-
-OUTPUT_DIR = Path("data/output")
-
-RAW_DIR = Path("data/raw")
 
 DB_PATH = database.DEFAULT_DB_PATH
 
@@ -60,7 +60,7 @@ def get_database_status() -> dict[str, str | None]:
 
     status = {}
 
-    with sqlite3.connect(DB_PATH) as con:
+    with closing(sqlite3.connect(DB_PATH)) as con:
         for table in [
             "census",
             "suikei",
