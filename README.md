@@ -127,7 +127,7 @@ uv run okpop setup
 同じPowerShellで、次のコマンドを実行します。
 
 ```powershell
-uv run python -m okpop.app.main
+uv run python -m okpop.app.admin
 ```
 
 表示されたローカルURLをブラウザで開くと、OKPOPのGUIを利用できます。
@@ -137,7 +137,7 @@ uv run python -m okpop.app.main
 2回目以降は、`okpop-main` フォルダでPowerShellを開き、GUI起動コマンドを実行するだけです。
 
 ```powershell
-uv run python -m okpop.app.main
+uv run python -m okpop.app.admin
 ```
 
 ---
@@ -206,13 +206,23 @@ Manage the datasets and generate reports directly from the GUI.
 
 - Check the earliest and latest observation dates stored for each dataset.
 - Update the population database.
-- Retrieve the latest available report or generate one for a specified year and month.
-- Download generated ZIP archives.
 
 <div align="center">
 
 <img src="assets/dashboard_database.png"
-     alt="OKPOP database management and report controls"
+     alt="OKPOP database management"
+     width="90%">
+
+</div>
+
+- Retrieve the latest available report or generate one for a specified year and month.
+- Download generated ZIP archives.
+
+
+<div align="center">
+
+<img src="assets/dashboard_report.png"
+     alt="OKPOP report controls"
      width="90%">
 
 </div>
@@ -311,32 +321,27 @@ Run the test suite:
 uv run pytest
 ```
 
-Run the GUI:
+## 🔧 Workflow Scripts (For Reference)
 
-```bash
-uv run python -m okpop.app.main
-```
+The `sandbox/scripts/` directory contains various workflow scripts created during the development of OKPOP.
 
-
-## 🔧 Workflow Scripts
-
-Development and maintenance workflows are available under
-`sandbox/scripts/`.
+Some of these scripts may no longer be actively used or maintained. However, they are kept as references and may provide useful examples or hints for understanding, modifying, or extending OKPOP.
 
 ```text
 workflow_build.py
-    Build the database from scratch.
+    Example workflow for building the database from scratch.
 
 workflow_update.py
-    Download new source data and update the existing database.
+    Example workflow for downloading source data and updating the database.
 
 workflow_report.py
-    Generate the population report archive.
+    Example workflow for generating a population report archive.
 
 workflow_report_mail.py
-    Generate the report archive and send it by Gmail.
+    Example workflow for generating and emailing a report archive.
 ```
 
+**Note:** These scripts are primarily intended for reference and experimentation. They are not guaranteed to work with the current version of OKPOP.
 
 ## 🧰 Tech Stack
 

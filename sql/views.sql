@@ -1,3 +1,4 @@
+BEGIN TRANSACTION;
 -- ============================================================
 -- 基本人口
 -- ============================================================
@@ -499,6 +500,18 @@ LEFT JOIN view_three_age_groups_rate AS three_m
 LEFT JOIN view_three_age_groups_rate AS three_f
     ON b.observation_date = three_f.observation_date
    AND b.area_name = three_f.area_name
-   AND three_f.sex = 'female';
+   AND three_f.sex = 'female'
 
+-- レポート対象は新形式の86地域に統一する。
+-- 元テーブルと view_base_data の93地域はそのまま残す。
+WHERE b.area_name NOT IN (
+    '大阪府市部',
+    '大阪府郡部',
+    '三島郡',
+    '豊能郡',
+    '泉北郡',
+    '泉南郡',
+    '南河内郡'
+);
 
+COMMIT;

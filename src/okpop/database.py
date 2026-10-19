@@ -1,3 +1,4 @@
+from contextlib import closing
 import sqlite3
 from pathlib import Path
 
@@ -28,7 +29,7 @@ def init_database(
     schema_file = Path(schema_file)
     dbname.parent.mkdir(parents=True, exist_ok=True)
 
-    # オションでリセット
+    # オプションでリセット
     if reset:
         dbname.unlink(missing_ok=True)
 
@@ -64,6 +65,27 @@ def create_views(
         raise
     finally:
         con.close()
+
+
+def update_views(
+    dbname: str | Path = DEFAULT_DB_PATH,
+    views_file: str | Path = DEFAULT_VIEWS_PATH,
+) -> None:
+    """既存データベースのVIEWを更新する。"""
+
+    dbname = Path(dbname)
+
+    if not dbname.is_file():
+        raise FileNotFoundError(
+            f"データベースが存在しません: {dbname}"
+        )
+
+    create_views(
+        dbname=dbname,
+        views_file=views_file,
+    )
+
+    print("Viewを更新しました")
 
 
 def write_df_to_db(
