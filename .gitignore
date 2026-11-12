@@ -26,6 +26,8 @@ data/raw/
 data/db/
 data/output/
 
+data.backup_20261112/
+
 # Sandbox data
 sandbox/data/*
 !sandbox/data/.gitkeep

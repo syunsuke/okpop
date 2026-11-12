@@ -8,40 +8,31 @@ from bs4 import BeautifulSoup, Tag
 
 
 def _get_href(tag: Tag) -> str | None:
-    """aタグからhrefを取得する。"""
-
     href = tag.get("href")
-
-    if isinstance(href, str):
-        return href
-
-    return None
+    return href if isinstance(href, str) else None
 
 
 def urls_from_page(
     url: str,
     patterns: list[str],
 ) -> list[str]:
-    """Webページからパターンに一致するURLを取得する。"""
-
-    res = requests.get(url, timeout=10)
+    res = requests.get(url, timeout=20)
     res.raise_for_status()
-
     soup = BeautifulSoup(res.text, "html.parser")
-
     urls = []
-
+    seen = set()
     for a in soup.find_all("a"):
         href = _get_href(a)
-
-        if href is None:
+        if not href:
             continue
-
-        for pattern in patterns:
-            if re.search(pattern, href):
-                urls.append(urljoin(url, href))
-                break
-
+        absolute = urljoin(url, href)
+        filename = Path(urlparse(absolute).path).name
+        if any(
+            re.search(pattern, filename, re.I)
+            for pattern in patterns
+        ) and absolute not in seen:
+            urls.append(absolute)
+            seen.add(absolute)
     return urls
 
 
@@ -49,62 +40,46 @@ def file_from_url(
     url: str,
     directory: str | Path,
 ) -> Path:
-    """URLから1ファイルをダウンロードする。"""
-
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
-
     filename = Path(urlparse(url).path).name
     output = directory / filename
-
     res = requests.get(url, timeout=30)
     res.raise_for_status()
-
-    output.write_bytes(res.content)
-
+    # Do not leave a partial file on failure.
+    temporary = output.with_suffix(output.suffix + ".part")
+    try:
+        temporary.write_bytes(res.content)
+        temporary.replace(output)
+    finally:
+        temporary.unlink(missing_ok=True)
     return output
+
 
 def files_from_page(
     url: str,
     patterns: list[str],
     directory: str | Path,
     interval: float = 0.3,
+    *,
+    urls: list[str] | None = None,
 ) -> list[Path]:
-    """Webページから対象ファイルをまとめてダウンロードする。"""
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
-
-    urls = urls_from_page(url, patterns)
-
-    total = len(urls)
-
-    print(f"{total} files found")
-
+    if urls is None:
+        urls = urls_from_page(url, patterns)
+    print(f"{len(urls)} files found")
     downloaded = []
-
     for i, file_url in enumerate(urls, start=1):
         filename = Path(urlparse(file_url).path).name
         output = directory / filename
-
         if output.exists():
-            print(f"[{i}/{total}] skip: {filename}")
+            print(f"[{i}/{len(urls)}] skip: {filename}")
             continue
-
-        print(f"[{i}/{total}] download: {filename}")
-
-        path = file_from_url(
+        print(f"[{i}/{len(urls)}] download: {filename}")
+        downloaded.append(file_from_url(
             file_url,
             directory,
-        )
-
-        downloaded.append(path)
-
-        print(f"[{i}/{total}] done: {filename}")
-
+        ))
         time.sleep(interval)
-
     return downloaded
-
-
-
-

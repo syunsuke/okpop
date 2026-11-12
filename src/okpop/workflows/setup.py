@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from okpop import database, fetch, importer
+from okpop.validation import validate_database
 from okpop.paths import (
     DATA_DIR,
     DATA_TYPES,
@@ -106,6 +107,8 @@ def build_database(db_path: str | Path) -> None:
     database.create_views(
         dbname=db_path,
     )
+
+    validate_database(db_path)
 
     print("Database build completed.")
 

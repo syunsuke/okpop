@@ -7,21 +7,36 @@ from okpop import fetch
 
 
 def test_fetch(monkeypatch, tmp_path):
+    """対象URLを確認してから保存へ渡す。"""
     called = {}
+    urls = [
+        "https://example.com/"
+        "kakuhou_jk20251101.xlsx",
+    ]
+
+    def fake_urls_from_page(url, patterns):
+        called["listing_url"] = url
+        called["listing_patterns"] = patterns
+        return urls
 
     def fake_files_from_page(
-        url: str,
-        patterns: list[str],
-        directory: str | Path,
-    ) -> list[Path]:
+        url,
+        patterns,
+        directory,
+        *,
+        urls,
+    ):
         called["url"] = url
         called["patterns"] = patterns
         called["directory"] = directory
+        called["urls"] = urls
+        return [Path(directory) / "sample.xlsx"]
 
-        return [
-            Path(directory) / "sample.xlsx",
-        ]
-
+    monkeypatch.setattr(
+        fetch.dl,
+        "urls_from_page",
+        fake_urls_from_page,
+    )
     monkeypatch.setattr(
         fetch.dl,
         "files_from_page",
@@ -32,35 +47,59 @@ def test_fetch(monkeypatch, tmp_path):
         "suikei_current",
         raw_dir=tmp_path,
     )
-
     source = fetch.SOURCES["suikei_current"]
 
+    assert called["listing_url"] == source.url
+    assert called["listing_patterns"] == source.patterns
     assert called["url"] == source.url
     assert called["patterns"] == source.patterns
     assert called["directory"] == tmp_path / "suikei"
-
+    assert called["urls"] == urls
     assert result == [
         tmp_path / "suikei" / "sample.xlsx",
     ]
 
 
 def test_fetch_datatype(monkeypatch, tmp_path):
+    """全取得元を先に検査し、通信なしで保存する。"""
     called = []
+    listed = []
+    urls = {
+        "suikei_current": [
+            "https://example.com/"
+            "kakuhou_jk20251101.xlsx",
+        ],
+        "suikei_archive": [
+            "https://example.com/jk20250901.xlsx",
+        ],
+    }
 
-    def fake_fetch(
-        source_name: str,
-        raw_dir: str | Path,
-    ) -> list[Path]:
-        called.append(source_name)
+    def fake_source_urls(source_name):
+        listed.append(source_name)
+        return urls[source_name]
 
+    def fake_files_from_page(
+        url,
+        patterns,
+        directory,
+        *,
+        urls,
+    ):
+        called.append((url, patterns, directory, urls))
         return [
-            Path(raw_dir) / f"{source_name}.xlsx",
+            Path(directory)
+            / Path(urls[0]).name,
         ]
 
     monkeypatch.setattr(
         fetch,
-        "fetch",
-        fake_fetch,
+        "_source_urls",
+        fake_source_urls,
+    )
+    monkeypatch.setattr(
+        fetch.dl,
+        "files_from_page",
+        fake_files_from_page,
     )
 
     result = fetch.fetch_datatype(
@@ -68,15 +107,66 @@ def test_fetch_datatype(monkeypatch, tmp_path):
         raw_dir=tmp_path,
     )
 
-    assert called == [
+    assert listed == [
         "suikei_current",
         "suikei_archive",
     ]
+    assert len(called) == 2
+    for index, name in enumerate(listed):
+        source = fetch.SOURCES[name]
+        assert called[index] == (
+            source.url,
+            source.patterns,
+            tmp_path / source.directory,
+            urls[name],
+        )
 
     assert result == [
-        tmp_path / "suikei_current.xlsx",
-        tmp_path / "suikei_archive.xlsx",
+        tmp_path / "suikei"
+        / "kakuhou_jk20251101.xlsx",
+        tmp_path / "suikei"
+        / "jk20250901.xlsx",
     ]
+
+
+def test_fetch_datatype_duplicate_stops(
+    monkeypatch,
+    tmp_path,
+):
+    """重複があればダウンロード前に停止する。"""
+    urls = {
+        "suikei_current": [
+            "https://example.com/"
+            "kakuhou_jk20251101.xlsx",
+        ],
+        "suikei_archive": [
+            "https://example.com/jk20251101.xlsx",
+        ],
+    }
+
+    monkeypatch.setattr(
+        fetch,
+        "_source_urls",
+        lambda name: urls[name],
+    )
+
+    def unexpected_download(*args, **kwargs):
+        pytest.fail("重複時に取得してはいけない")
+
+    monkeypatch.setattr(
+        fetch.dl,
+        "files_from_page",
+        unexpected_download,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Duplicate reference months",
+    ):
+        fetch.fetch_datatype(
+            "suikei",
+            raw_dir=tmp_path,
+        )
 
 
 def test_fetch_datatype_unknown(tmp_path):
@@ -135,7 +225,7 @@ def test_check_datatype(monkeypatch, tmp_path):
     assert called["directory"] == tmp_path / "suikei"
 
     assert called["start_date"] == pd.Timestamp(
-        "2015-11-01"
+        "2020-11-01"
     )
 
     assert called["end_date"] == pd.Timestamp(

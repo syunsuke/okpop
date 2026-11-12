@@ -169,7 +169,9 @@ def write_report(
         start=2,
     ):
         for col, value in enumerate(values, start=1):
-            if isinstance(value, pd.Timestamp):
+            if pd.isna(value):
+                value = None
+            elif isinstance(value, pd.Timestamp):
                 value = value.to_pydatetime()
 
             ws.cell(
@@ -254,32 +256,59 @@ def validate_report_data(
             "連続していません"
         )
 
-    # 欠損値チェック用のコピーを作る
-    check_data = latest_data.copy()
+    # 基本人口・世帯数は73か月すべて必須。
+    required = [
+        "total_population",
+        "male_population",
+        "female_population",
+        "total_households",
+    ]
+    missing_required = latest_data[required].isna()
+    if missing_required.any().any():
+        cols = missing_required.columns[
+            missing_required.any()
+        ].tolist()
+        raise ValueError(
+            f"基本人口に欠損があります: {cols}"
+        )
 
-    # 国勢調査月では、月次変動値のNULLを許容する
-    monthly_columns = [
+    # 月次人口動態は推計人口に限って必須。
+    # 国勢調査・過去の補正人口の欠損は許容する。
+    monthly = [
         "monthly_population_change",
         "monthly_natural_change",
         "births_monthly",
         "deaths_monthly",
         "monthly_net_migration",
     ]
-
-    census_rows = (
-        check_data["source"] == "census"
-    )
-
-    check_data.loc[
-        census_rows,
-        monthly_columns,
-    ] = 0
-
-    # 上記以外に欠損値があればエラー
-    if check_data.isna().any().any():
+    suikei_rows = latest_data["source"] == "suikei"
+    missing_monthly = latest_data.loc[
+        suikei_rows, monthly
+    ].isna()
+    if missing_monthly.any().any():
         raise ValueError(
-            "レポートデータに欠損値があります"
+            "推計人口の月次人口動態に欠損があります"
         )
+
+    # 年齢別人口がない月は欠損として保持する。
+    # 値の補完・ゼロ置換は行わない。
+    age_cols = [
+        col for col in latest_data.columns
+        if col.startswith((
+            "total_age_", "male_age_", "female_age_",
+            "total_pop_", "male_pop_", "female_pop_",
+        ))
+    ]
+    missing_age_dates = latest_data.loc[
+        latest_data[age_cols].isna().any(axis=1),
+        "observation_date",
+    ]
+    if not missing_age_dates.empty:
+        months = ", ".join(
+            d.strftime("%Y-%m")
+            for d in missing_age_dates
+        )
+        print(f"年齢別データの欠損月: {months}")
 
 
 

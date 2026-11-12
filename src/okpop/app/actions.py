@@ -9,7 +9,7 @@ TEMPLATE_PATH = (
     PROJECT_ROOT
     / "assets"
     / "templates"
-    / "populaiton_report_template_0001.xlsx"
+    / "population_report_template_0001.xlsx"
 )
 
 DB_PATH = database.DEFAULT_DB_PATH

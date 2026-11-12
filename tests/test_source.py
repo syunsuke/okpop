@@ -53,10 +53,12 @@ def test_source_is_frozen():
 def test_source_keys():
     assert set(SOURCES) == {
         "census_2020",
+        "census_2025",
         "suikei_current",
         "suikei_archive",
         "kubun_current",
         "kubun_archive",
+        "kubun_older",
         "hosei",
     }
 
@@ -69,7 +71,7 @@ def test_census_2020():
         "o040090/toukei/top_portal/kokucho.html"
     )
     assert source.patterns == [
-        r"r2kokutyo_osakahu_kakuhou_syousai\.xlsx",
+        r"r2kokutyo_osakahu_kakuhou_syousai\.xlsx$",
     ]
     assert source.directory == "census"
     assert source.start_date == "2020-10-01"
@@ -81,9 +83,10 @@ def test_suikei_current():
     assert source.datatype == "suikei"
     assert source.directory == "suikei"
     assert source.patterns == [
-        r"jk20\d{6}.*\.xlsx",
+        r"(?:kakuhou_|kakutei_)?jk20\d{6}"
+        r"(?:[-_]\d+)?\.xlsx$",
     ]
-    assert source.start_date == "2020-11-01"
+    assert source.start_date == "2025-11-01"
     assert source.end_date is None
 
 
@@ -93,11 +96,12 @@ def test_suikei_archive():
     assert source.datatype == "suikei"
     assert source.directory == "suikei"
     assert source.patterns == [
-        r"jk20\d{6}.*\.xlsx",
-        r"jtsukikakuhou20\d{4}.*\.xlsx",
+        r"(?:kakuhou_|kakutei_)?jk20\d{6}"
+        r"(?:[-_]\d+)?\.xlsx$",
+        r"jtsukikakuhou20\d{4}.*\.xlsx$",
     ]
-    assert source.start_date == "2015-11-01"
-    assert source.end_date == "2020-09-01"
+    assert source.start_date == "2020-11-01"
+    assert source.end_date == "2025-09-01"
 
 
 def test_kubun_current():
@@ -106,9 +110,9 @@ def test_kubun_current():
     assert source.datatype == "kubun"
     assert source.directory == "kubun"
     assert source.patterns == [
-        r".*5sai.*\.xlsx",
+        r".*5sai.*\.xlsx$",
     ]
-    assert source.start_date == "2020-10-01"
+    assert source.start_date == "2025-10-01"
     assert source.end_date is None
 
 
@@ -118,10 +122,23 @@ def test_kubun_archive():
     assert source.datatype == "kubun"
     assert source.directory == "kubun"
     assert source.patterns == [
-        r".*5sai.*\.xlsx",
+        r".*5sai.*\.xlsx$",
+    ]
+    assert source.start_date == "2020-11-01"
+    assert source.end_date == "2025-09-01"
+
+
+def test_kubun_older():
+    source = SOURCES["kubun_older"]
+
+    assert source.datatype == "kubun"
+    assert source.directory == "kubun"
+    assert source.patterns == [
+        r"hosei20\d{4}.*5sai.*\.xlsx$",
+        r"202010kakutei5sai\.xlsx$",
     ]
     assert source.start_date == "2016-11-01"
-    assert source.end_date == "2020-09-01"
+    assert source.end_date == "2020-10-01"
 
 
 def test_hosei():
@@ -130,9 +147,9 @@ def test_hosei():
     assert source.datatype == "hosei"
     assert source.directory == "hosei"
     assert source.patterns == [
-        r"hosei20\d{4}_\d{2}.*\.xlsx",
+        r"hosei20\d{4}_\d{2}.*\.xlsx$",
     ]
-    assert source.start_date == "2010-11-01"
+    assert source.start_date == "2000-10-01"
     assert source.end_date == "2020-09-01"
 
 def test_source_urls():

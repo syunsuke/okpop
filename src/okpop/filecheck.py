@@ -5,130 +5,110 @@ from urllib.parse import urlparse
 import pandas as pd
 
 
-def guess_datatype(file: str | Path) -> str | None:
-    """ファイル名からデータ種別を推測する。"""
+def _name(file: str | Path) -> str:
+    return Path(urlparse(str(file)).path).name
 
-    filename = Path(urlparse(str(file)).path).name
+
+def guess_datatype(
+    file: str | Path,
+) -> str | None:
+    name = _name(file)
 
     if re.fullmatch(
         r"r2kokutyo_osakahu_kakuhou_syousai\.xlsx",
-        filename,
+        name,
     ):
         return "census"
 
-    if re.fullmatch(r".*5sai\.xlsx", filename):
+    if re.fullmatch(
+        r"r7census_osaka_kakutei_"
+        r"gaiyou_data\.xlsx",
+        name,
+        re.I,
+    ):
+        return "census"
+
+    if re.search(r"5sai.*\.xlsx$", name, re.I):
         return "kubun"
-
-    if re.fullmatch(r".*jk20.*\.xlsx", filename):
+    if re.fullmatch(
+        r"(?:kakuhou_|kakutei_)?jk20\d{6}"
+        r"(?:[-_]\d+)?\.xlsx",
+        name,
+    ):
         return "suikei"
-
-    if re.fullmatch(r"jtsukikakuhou20.*\.xlsx", filename):
+    if re.fullmatch(
+        r"jtsukikakuhou20\d{4}.*\.xlsx",
+        name,
+    ):
         return "suikei"
-
-    if re.fullmatch(r"hosei20.*\.xlsx", filename):
+    if re.fullmatch(
+        r"hosei20\d{4}_\d{2}.*\.xlsx",
+        name,
+    ):
         return "hosei"
-
     return None
 
 
 def dates_from_filename(
     file: str | Path,
 ) -> pd.DatetimeIndex | None:
-    """ファイル名から、そのファイルが対象とする年月を取得する。"""
+    name = _name(file)
+    datatype = guess_datatype(name)
 
-    filepath = Path(urlparse(str(file)).path)
-
-    match guess_datatype(filepath):
-
-        case "census":
-            # 増えたら考える
+    if datatype == "suikei":
+        match = re.search(
+            r"jk(20\d{2})(\d{2})(\d{2})",
+            name,
+        )
+        if match:
+            y, m, d = map(int, match.groups())
             return pd.DatetimeIndex([
-            pd.Timestamp("2020-10-01")
-        ])
+                pd.Timestamp(y, m, d)
+            ])
+        match = re.search(
+            r"jtsukikakuhou(20\d{2})(\d{2})",
+            name,
+        )
+        if match:
+            y, m = map(int, match.groups())
+            return pd.DatetimeIndex([
+                pd.Timestamp(y, m, 1)
+            ])
 
-        case "suikei":
-            res = re.search(
-                r"jk(20\d{2})(\d{2})(\d{2})",
-                filepath.name,
+    if datatype == "kubun":
+        match = re.search(
+            r"(20\d{2})(\d{2})",
+            name,
+        )
+        if match:
+            y, m = map(int, match.groups())
+            return pd.DatetimeIndex([
+                pd.Timestamp(y, m, 1)
+            ])
+
+    if datatype == "hosei":
+        match = re.search(
+            r"(20\d{2})(\d{2})_(\d{2})",
+            name,
+        )
+        if match:
+            y, m1, m2 = map(int, match.groups())
+            return pd.date_range(
+                start=f"{y}-{m1:02d}-01",
+                end=f"{y}-{m2:02d}-01",
+                freq="MS",
             )
-
-            if res:
-                y, m, d = res.groups()
-
-                ts = pd.Timestamp(
-                    int(y),
-                    int(m),
-                    int(d),
-                )
-
-                return pd.DatetimeIndex([ts])
-
-            res = re.search(
-                r"jtsukikakuhou(20\d{2})(\d{2})",
-                filepath.name,
-            )
-
-            if res:
-                y, m = res.groups()
-
-                ts = pd.Timestamp(
-                    int(y),
-                    int(m),
-                    1,
-                )
-
-                return pd.DatetimeIndex([ts])
-
-        case "kubun":
-            res = re.search(
-                r"(20\d{2})(\d{2})",
-                filepath.name,
-            )
-
-            if res:
-                y, m = res.groups()
-
-                ts = pd.Timestamp(
-                    int(y),
-                    int(m),
-                    1,
-                )
-
-                return pd.DatetimeIndex([ts])
-
-        case "hosei":
-            res = re.search(
-                r"(20\d{2})(\d{2})_(\d{2})",
-                filepath.name,
-            )
-
-            if res:
-                y, m1, m2 = res.groups()
-
-                return pd.date_range(
-                    start=f"{y}-{m1}-01",
-                    end=f"{y}-{m2}-01",
-                    freq="MS",
-                )
-
     return None
 
 
 def dates_from_dir(
     directory: str | Path,
 ) -> pd.DatetimeIndex:
-    """ディレクトリ内のExcelファイルから対象年月を取得する。"""
-
-    directory = Path(directory)
-
     dates = []
-
-    for file in directory.glob("*.xlsx"):
-        file_dates = dates_from_filename(file)
-
-        if file_dates is not None:
-            dates.extend(file_dates)
-
+    for file in Path(directory).glob("*.xlsx"):
+        found = dates_from_filename(file)
+        if found is not None:
+            dates.extend(found)
     return pd.DatetimeIndex(dates).sort_values()
 
 
@@ -137,41 +117,37 @@ def check_dates(
     start_date: str | pd.Timestamp | None = None,
     end_date: str | pd.Timestamp | None = None,
 ) -> dict:
-    """月次データの欠落と重複を調べる。"""
+    dates = pd.DatetimeIndex(dates)
+    if len(dates) == 0:
+        if start_date is None or end_date is None:
+            raise ValueError(
+                "No data: specify start_date and end_date"
+            )
 
-    if start_date is None:
-        start_date = min(dates)
-    else:
-        start_date = pd.Timestamp(start_date)  # pyright: ignore[reportAssignmentType]
-
-    if end_date is None:
-        end_date = max(dates)
-    else:
-        end_date = pd.Timestamp(end_date)  # pyright: ignore[reportAssignmentType]
-
-    index = pd.date_range(
-        start=start_date,
-        end=end_date,
-        freq="MS",
+    start = (
+        pd.Timestamp(start_date)
+        if start_date is not None else dates.min()
     )
-
-    df = pd.DataFrame(
-        {"count": 0},
-        index=index,
+    end = (
+        pd.Timestamp(end_date)
+        if end_date is not None else dates.max()
     )
+    if start > end:
+        raise ValueError("start_date is after end_date")
 
-    for date in dates:
-        if date in df.index:
-            df.loc[date, "count"] += 1
-
-    missing = df[df["count"] == 0].index.tolist()
-    duplicate = df[df["count"] > 1].index.tolist()
-
+    index = pd.date_range(start, end, freq="MS")
+    counts = dates.value_counts()
+    missing = [
+        date for date in index
+        if counts.get(date, 0) == 0
+    ]
+    duplicate = [
+        date for date in index
+        if counts.get(date, 0) > 1
+    ]
     return {
-        "start_date": start_date,
-        "end_date": end_date,
+        "start_date": start,
+        "end_date": end,
         "missing": missing,
         "duplicate": duplicate,
     }
-
-

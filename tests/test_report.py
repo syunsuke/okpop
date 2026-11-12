@@ -12,7 +12,7 @@ REPORT_DB_PATH = Path(
 )
 
 TEMPLATE_PATH = Path(
-    "assets/templates/populaiton_report_template_0001.xlsx"
+    "assets/templates/population_report_template_0001.xlsx"
 )
 
 
@@ -168,7 +168,7 @@ def test_validate_report_data_missing_value():
 
     with pytest.raises(
         ValueError,
-        match="欠損値",
+        match="基本人口に欠損があります",
     ):
         report.validate_report_data(df)
 

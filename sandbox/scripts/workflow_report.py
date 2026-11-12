@@ -6,7 +6,7 @@ DB_PATH = database.DEFAULT_DB_PATH
 
 TEMPLATE_PATH = Path(
     "assets/templates/"
-    "populaiton_report_template_0001.xlsx"
+    "population_report_template_0001.xlsx"
 )
 
 OUTPUT_DIR = Path(

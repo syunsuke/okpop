@@ -105,3 +105,39 @@ def test_check_dates_with_range():
     ]
 
     assert result["duplicate"] == []
+
+
+def test_new_suikei_filename():
+    for filename, expected in [
+        ("kakuhou_jk20251101.xlsx", "2025-11-01"),
+        ("jk20261001.xlsx", "2026-10-01"),
+        ("jk20240201-2.xlsx", "2024-02-01"),
+    ]:
+        assert filecheck.guess_datatype(filename) == "suikei"
+        dates = filecheck.dates_from_filename(filename)
+        assert dates is not None
+        assert dates[0] == pd.Timestamp(expected)
+
+
+def test_census_datatype():
+    filename = (
+        "r2kokutyo_osakahu_"
+        "kakuhou_syousai.xlsx"
+    )
+    assert filecheck.guess_datatype(filename) == "census"
+
+
+def test_missing_month_without_duplicate():
+    dates = pd.DatetimeIndex([
+        "2025-09-01",
+        "2025-11-01",
+    ])
+    result = filecheck.check_dates(
+        dates,
+        start_date="2025-09-01",
+        end_date="2025-11-01",
+    )
+    assert result["missing"] == [
+        pd.Timestamp("2025-10-01"),
+    ]
+    assert result["duplicate"] == []
