@@ -1,6 +1,7 @@
 """Validate a newly built OKPOP SQLite database."""
 
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 TABLES = (
@@ -33,9 +34,11 @@ def validate_database(db_path: str | Path) -> None:
     errors = []
 
     # Open read-only so verification cannot create or mutate the DB.
-    with sqlite3.connect(
-        db_path.resolve().as_uri() + "?mode=ro",
-        uri=True,
+    with closing(
+        sqlite3.connect(
+            db_path.resolve().as_uri() + "?mode=ro",
+            uri=True,
+        )
     ) as con:
         print("\n=== Database verification ===")
 
